@@ -701,7 +701,7 @@ def adminSearch(urlPassed):
 
 
 
-#create a flask route with a dynamically generated url -
+#create a flask route with a dynamically generated url aka urlPassed
 @app.route('/admin/search/<activity>/<urlPassed>/')
 def adminSearchFiltered(urlPassed,activity):
     activitiesList = getActivities()
