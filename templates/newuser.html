@@ -1,0 +1,110 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+
+    <title>Admin</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{ url_for('static', filename='dist/css/bootstrap.min.css') }}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='dashboard.css') }}" rel="stylesheet">
+  </head>
+
+  <body>
+    <header>
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="#">Records Admin</a>
+        <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for ('admin')}}">Records</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for ('modifycategory')}}">Categories</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for ('users')}}">Users</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for ('logout')}}">Log Out</a>
+            </li>
+          </ul>
+          
+        </div>
+      </nav>
+    </header>
+<div class="container-fluid">
+    
+    
+
+        <main role="main" class="ml-sm-auto  pt-3">
+          
+          <h2>New User</h2>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Password</th>
+                </tr>
+              </thead>
+              <tbody>
+				<form method="POST" action="">
+                  
+				  <td>{{ form.csrf_token }}
+     {{ form.name(size=20) }}</td>
+                <!--  <td><select name="activity">
+				  <option value="{{currentActivity}}">{{currentActivity}}</option>	
+				  {% for activity in activities %}  
+					  {% if (currentActivity != activity) %}
+		   <option value="{{activity}}">{{activity}}</option>
+		   {%endif%}
+			{% endfor %}
+</select>  </td>-->
+                  <td>{{ form.csrf_token }}
+     {{ form.email(size=20) }}</td>
+                  <td>{{ form.csrf_token }}
+     {{ form.password(size=20) }}</td>
+				  </tr>
+				 
+				
+				  
+              
+              </tbody>
+            </table>
+			<input type="submit" value="Submit" a href="#">
+				 </form>
+          </div>
+        </main>
+      </div>
+    </div>
+
+   <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="{{ url_for('static', filename = 'assets/js/vendor/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'dist/js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'js/vendor/holder.min.js') }}"></script>
+    <script>
+      Holder.addTheme('thumb', {
+        bg: '#55595c',
+        fg: '#eceeef',
+        text: 'Thumbnail'
+      });
+    </script>
+  </body>
+</html>
