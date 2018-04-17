@@ -15,11 +15,12 @@ app.config['SECRET_KEY'] = '7d441f27d441f37567d441f2b6176a'
 database = peewee.SqliteDatabase("db.db")
 
 
-#####################     Login Stuff   ###################################
+#####################     Hashbrown     ###################################
 def hashPass(plainText):
+    #take in plain text and then return hash
     hash = pbkdf2_sha256.hash(plainText)
     return hash
-
+#####################     Login Stuff   ###################################
 #add to database
 def addUser(name,emailIn,passIn):
     from models import Users
@@ -31,6 +32,7 @@ def addUser(name,emailIn,passIn):
                         person = name
                         )
     user.save()
+#see if user exists
 def checkuserExists(emailIn):
     from models import Users
     #see if email exists in database
@@ -89,8 +91,11 @@ def deleteUser(urlPassed):
 login_manager = flask_login.LoginManager()
 
 login_manager.init_app(app)
-
-
+def checknumberofusers():
+    from models import Users
+    #find the number of users and return that number
+    number = Users.select().count()
+    return number
 class User(flask_login.UserMixin):
     pass
 
@@ -555,7 +560,8 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
 
-    email = request.form['email']
+    emailraw = request.form['email']
+    email = emailraw.lower()
     password = request.form['password']
     if checkPW(email,password) == True:
         user = User()
@@ -597,6 +603,7 @@ def index():
 def users():
     #call activities function
     users = getUsers()
+
     #return index template and pass activities to show up
     return render_template('users.html', users=users)
 
@@ -609,7 +616,7 @@ def editUser(urlPassed):
         name = form.name.data
         if name != '':
             changeUser('name',name,urlPassed)
-        email = form.email.data
+        email = (form.email.data).lower()
         if email != '':
             changeUser('email', email, urlPassed)
         password = form.password.data
@@ -625,9 +632,10 @@ def newUser():
         name = form.name.data
         if name == '':
             return "Please fill out the name field. Press the back button in your browser to return."
-        email = form.email.data
-        if email == '':
+        rawemail = form.email.data
+        if rawemail == '':
             return "Please fill out the email field. Press the back button in your browser to return."
+        email = rawemail.lower()
         password = form.password.data
         if password == '':
             return "Please fill out the password field. Press the back button in your browser to return."
@@ -639,7 +647,10 @@ def newUser():
 @app.route('/admin/user/delete/<urlPassed>')
 @flask_login.login_required
 def deleteuserView(urlPassed):
-    deleteUser(urlPassed)
+    if int(checknumberofusers()) > 1:
+        deleteUser(urlPassed)
+    else:
+        return("You can't delete this user. You need to have one user. If you want to delete this person, create a new user first. ")
     return redirect(url_for('users'))
 
 #main admin
@@ -656,7 +667,8 @@ def admin():
         print(search)
         return redirect(url_for('adminSearch', urlPassed=search))
 
-    return render_template('admin.html', databaseQuery=databaseQuery, activities=activitiesList, form=form)
+
+    return render_template('result.html', urlPassed="", databaseQuery=databaseQuery, isadmin=True, activities=activitiesList, form=form, searchVisible=1, activityBlacked='All', showActivities=1)
 @app.route('/view/', methods=['GET', 'POST'])
 def view():
     form = editForm()
@@ -665,17 +677,31 @@ def view():
     if request.method == 'POST':
         search = form.search.data
         print(search)
-        return redirect(url_for('searchView', urlPassed=search))
+        return redirect(url_for('viewSearch', urlPassed=search))
 
-    return render_template('view.html', databaseQuery=databaseQuery, activities=activitiesList, form=form)
+    return render_template('result.html', urlPassed="", databaseQuery=databaseQuery, isadmin=False, activities=activitiesList, form=form, searchVisible=True, activityBlacked='All', showActivities=True)
 #main admin
 @app.route('/view/<urlPassed>', methods=['GET', 'POST'])
-@flask_login.login_required
 def viewFiltered(urlPassed):
-
+    form = editForm()
     databaseQuery = searchDBActivity(urlPassed)
     activitiesList = getActivities()
-    return render_template('view.html', databaseQuery=databaseQuery, activities=activitiesList)
+    if request.method == 'POST':
+        search = form.search.data
+        print(search)
+        return redirect(url_for('viewSearch', urlPassed=search, activity=urlPassed, searchVisible=0))
+    return render_template('result.html', databaseQuery=databaseQuery, isadmin=False, activities=activitiesList,
+                           form=form, urlPassed=urlPassed, searchVisible=True, activityBlacked=urlPassed, showActivities=True)
+#create a flask route with a dynamically generated url -
+@app.route('/view/search/<urlPassed>')
+def viewSearch(urlPassed):
+    activitiesList = getActivities()
+    #query our database with the URL argument provided to search by activity
+    databaseQuery = search(urlPassed)
+    #render html page with results and pass on the databaseQuery dictionary and url passed so it shows the name at the top
+    return render_template('result.html', databaseQuery=databaseQuery, isadmin=False, urlPassed=urlPassed, activities=activitiesList, searchVisible=0,  showActivities=0 )
+
+
 
 #main admin
 @app.route('/admin/<urlPassed>', methods=['GET', 'POST'])
@@ -687,8 +713,8 @@ def adminFiltered(urlPassed):
     if request.method == 'POST':
         search = form.search.data
         print(search)
-        return redirect(url_for('adminSearchFiltered', urlPassed=search, activity=urlPassed))
-    return render_template('admin.html', databaseQuery=databaseQuery, activities=activitiesList, form=form)
+        return redirect(url_for('adminSearchFiltered', urlPassed=search, activity=urlPassed, searchVisible=0))
+    return render_template('result.html', databaseQuery=databaseQuery, isadmin=True, activities=activitiesList, form=form, urlPassed=urlPassed, searchVisible=1, activityBlacked=urlPassed, showActivities=1)
 
 #create a flask route with a dynamically generated url -
 @app.route('/admin/search/<urlPassed>/')
@@ -697,7 +723,7 @@ def adminSearch(urlPassed):
     #query our database with the URL argument provided to search by activity
     databaseQuery = search(urlPassed)
     #render html page with results and pass on the databaseQuery dictionary and url passed so it shows the name at the top
-    return render_template('admin.html', databaseQuery=databaseQuery, urlPassed=urlPassed, activities=activitiesList)
+    return render_template('result.html', databaseQuery=databaseQuery, isadmin=True, urlPassed=urlPassed, activities=activitiesList, searchVisible=0,  showActivities=0 )
 
 
 
@@ -709,7 +735,7 @@ def adminSearchFiltered(urlPassed,activity):
     databaseQuery = searchFilteredActivity(activity,urlPassed)
     print(databaseQuery)
     #render html page with results and pass on the databaseQuery dictionary and url passed so it shows the name at the top
-    return render_template('admin.html', databaseQuery=databaseQuery, urlPassed=urlPassed, activities=activitiesList)
+    return render_template('result.html', databaseQuery=databaseQuery, isadmin=True, urlPassed=urlPassed, activities=activitiesList, searchVisible=0, showActivities=0)
 
 
 #modify categories
@@ -794,19 +820,8 @@ def deleteCategory(urlPassed):
     return redirect(url_for('modifycategory'))
 
 #create a flask route with a dynamically generated url -
-@app.route('/<urlPassed>')
-def unknown_page(urlPassed):
-    #query our database with the URL argument provided to search by activity
-    databaseQuery = searchDBActivity(urlPassed)
-    #render html page with results and pass on the databaseQuery dictionary and url passed so it shows the name at the top
-    return render_template('results.html', databaseQuery=databaseQuery, urlPassed=urlPassed)
-#create a flask route with a dynamically generated url -
 @app.route('/search/<urlPassed>')
-def searchView(urlPassed):
-    #query our database with the URL argument provided to search by activity
-    databaseQuery = search(urlPassed)
-    #render html page with results and pass on the databaseQuery dictionary and url passed so it shows the name at the top
-    return render_template('resultsView.html', databaseQuery=databaseQuery, urlPassed=urlPassed)
+
 #delete record
 @app.route('/admin/edit/delete/<urlPassed>', methods=('GET', 'POST'))
 @flask_login.login_required

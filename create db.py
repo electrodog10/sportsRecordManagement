@@ -1,6 +1,6 @@
 import peewee
 
-database = peewee.SqliteDatabase("db.db")
+database = peewee.SqliteDatabase("/var/www/FlaskApp/FlaskApp/db.db")
 
 
 ########################################################################
